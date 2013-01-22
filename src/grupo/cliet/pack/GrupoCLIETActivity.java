@@ -2,32 +2,30 @@ package grupo.cliet.pack;
 
 import java.net.URL;
 import java.util.ArrayList;
-
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import java.util.Calendar;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -35,26 +33,47 @@ import android.widget.TextView;
 
 
 public class GrupoCLIETActivity extends Activity {
-			private static final String twit = "twit";
 			private ServicioBase s;
+			private PendingIntent pendingIntent;
 
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         doBindService();
-        setContentView(R.layout.main);
-        LlenarTabla("pazlagunera", 20);
+        editarbarra();
+        //setContentView(R.layout.main);
         ArrayList<Tweet> tweets = getTweets();
         ListView listView = (ListView) findViewById(R.id.ListViewId);
         listView.setAdapter(new UserItemAdapter(this, R.layout.listitem, tweets));
-         
+        Intent intent=new Intent(this, alarmaReceiver.class);
+        getApplicationContext().sendBroadcast(intent);
+
 
 }
-    private ServiceConnection mConnection = new ServiceConnection(){
+    @Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+    	menu.add(Menu.NONE, 0, 0, "Preferencias");
+		return super.onCreateOptionsMenu(menu);
+	}
+
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) { 	
+		case 0:
+			startActivity(new Intent(this, Preferencias.class));
+			return true;
+		}
+		return false;
+	}
+	
+	private ServiceConnection mConnection = new ServiceConnection(){
 		public void onServiceConnected(ComponentName name, IBinder binder) {
 			// TODO Auto-generated method stub
     		s = ((ServicioBase.MyBinder)binder).getService();
+    		s.LlenarBD(s.ExtraerTwitter("pazlagunera", 20));
     		Log.d("Servicio", "conectado");
 		}
 		public void onServiceDisconnected(ComponentName name) {
@@ -132,60 +151,6 @@ public class GrupoCLIETActivity extends Activity {
 		}
 		catch(Exception ex) {return null;}
 	}
-	public void LlenarTabla(String searchTerm, int page) {
-	//public ArrayList<Tweet> getTweets(String searchTerm, int page) {
-		String searchUrl = "http://search.twitter.com/search.json?q=from:"+searchTerm+"&rpp="+page+"&include_entities=true&result_type=recent";
-
-		//ArrayList<Tweet> tweetstemp = new ArrayList<Tweet>();
-		
-		HttpClient client = new  DefaultHttpClient();
-		HttpGet get = new HttpGet(searchUrl);
-	      
-		ResponseHandler<String> responseHandler = new BasicResponseHandler();
-
-		String responseBody = null;
-		try{
-			responseBody = client.execute(get, responseHandler);
-		}catch(Exception ex) {
-			ex.printStackTrace();
-		}
-
-		JSONObject jsonObject = null;
-		JSONParser parser=new JSONParser();
-		
-		try {
-			Object obj = parser.parse(responseBody);
-			jsonObject=(JSONObject)obj;
-			
-		}catch(Exception ex){
-			Log.v("TEST","Exception: " + ex.getMessage());
-		}
-		
-		JSONArray arr = null;
-		
-		try {
-			Object j = jsonObject.get("results");
-			arr = (JSONArray)j;
-		}catch(Exception ex){
-			Log.v("TEST","Exception: " + ex.getMessage());
-		}
-		AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(this, "administracion", null, 1);
-		SQLiteDatabase bd=admin.getWritableDatabase();
-        bd.execSQL("drop table if exists tweets");
-        admin.onCreate(bd);
-        ContentValues registro = new ContentValues();
-        for(Object t : arr) {
-			registro.put("id", ((JSONObject)t).get("id_str").toString());
-	        registro.put("usuario", ((JSONObject)t).get("from_user_name").toString());
-	        registro.put("tweet",((JSONObject)t).get("text").toString());
-	        registro.put("imagen",((JSONObject)t).get("profile_image_url").toString() ); 
-	        registro.put("fecha",((JSONObject)t).get("created_at").toString()) ; 	
-	        bd.insert("tweets", null, registro);
-	        Log.d("TWEET", "TWEET guardado "+(((JSONObject)t).get("id_str").toString()));
-        }
-        bd.close();
-        admin.close();
-	}
 	
 	public ArrayList<Tweet> getTweets() {
 		ArrayList<Tweet> tweets = new ArrayList<Tweet>();
@@ -200,20 +165,24 @@ public class GrupoCLIETActivity extends Activity {
             		fila.getString(fila.getColumnIndex("fecha"))));
            Log.d("id en BD", fila.getString(fila.getColumnIndex("_ID"))) ;
          }
-        /*if (fila.moveToFirst())
-        {
-        	Tweet tweet = new Tweet(fila.getString(0) ,fila.getString(1),
-        			fila.getString(2),fila.getString(3),fila.getString(4));
-			tweets.add(tweet);           
-        }
-        else
-            Toast.makeText(this, "BD vacia", Toast.LENGTH_SHORT).show();
-       */ 
         bd.close(); 
         fila.close();
         return tweets;
 
     }
+	
+	public void iniciarAlarma(){
+		Intent myIntent = new Intent(GrupoCLIETActivity.this, ServicioBase.class);
+		   pendingIntent = PendingIntent.getService(GrupoCLIETActivity.this, 0, myIntent, 0);
+
+		            AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+
+		            Calendar calendar = Calendar.getInstance();
+		            calendar.setTimeInMillis(System.currentTimeMillis());
+		            calendar.add(Calendar.SECOND, 15);
+		            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), calendar.getTimeInMillis(), pendingIntent);
+		            Log.d("alarma", "activada");
+	}
 	
 	public class Tweet {
 		public String id;
@@ -231,4 +200,15 @@ public class GrupoCLIETActivity extends Activity {
 			this.fecha = fecha;		
 		}
 	}
+	public void editarbarra(){
+    final boolean customTitleSupported = requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+    setContentView(R.layout.main);
+    if ( customTitleSupported ) {
+        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
+        }
+
+   /* final TextView myTitleText = (TextView) findViewById(R.id.myTitle);
+    if ( myTitleText != null ) {
+        myTitleText.setText("NEW TITLE");}*/
+    }
 	}

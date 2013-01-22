@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <string-array name="updateInterval">
+        <item name="5">Cada 5 Minutos</item>
+        <item name="10">Cada 10 Minutos</item>
+        <item name="20">Cada 20 Minutos</item>
+        <item name="30">cada 30 Minutos</item>
+        <item name="45">Cada 45 Minutos</item>
+        <item name="60">Cada Hora</item>
+        <item name="120">Cada 2 Horas</item>
+    </string-array>
+    
+    <string-array name="updateIntervalValues">
+        <item name="5">300000</item>
+        <item name="10">600000</item>
+        <item name="20">1200000</item>
+        <item name="30">1800000</item>
+        <item name="45">2700000</item>
+        <item name="60">3600000</item>
+        <item name="120">7200000</item>
+    </string-array>
+
+</resources>

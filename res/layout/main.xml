@@ -9,12 +9,14 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     >
+
     <Button
         android:id="@+id/lista"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Actualizar Lista"
-        android:onClick="actualizar" />
+        android:onClick="actualizar"
+        android:text="Actualizar Lista" />
+
 </LinearLayout>
 <ListView
     android:id="@+id/ListViewId"

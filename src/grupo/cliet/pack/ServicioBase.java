@@ -45,32 +45,38 @@ public class ServicioBase extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		timer.scheduleAtFixedRate((new TimerTask(){
-		public void run(){
+	/*	timer.scheduleAtFixedRate((new TimerTask(){
+		public void run(){ 
 			if (TweetNuevo()){
 				Log.d("Llenar", "No hay ningun tweet nuevo");
 			} else {
 				Log.v("",""+TweetNuevo());
 				LlenarBD(ExtraerTwitter("pazlagunera",20));
 				Log.d("llenar", "BD actualizada");
-				createNotification();
+				createNotification();}
 		}}}),0,UPDATE_INTERVAL);
-		Log.d("timer", "timer iniciado");
+		Log.d("timer", "timer iniciado"); */
 		}
 		
 	@Override
-	public void onStart(Intent intent, int startId) {
-		super.onStart(intent, startId);
-		onCreate();	
+	public int onStartCommand(Intent intent, int flags, int startId) {	
+		if (TweetNuevo()){
+			Log.d("Llenar", "No hay ningun tweet nuevo");
+		} else {
+			Log.v("",""+TweetNuevo());
+			LlenarBD(ExtraerTwitter("pazlagunera",20));
+			Log.d("llenar", "BD actualizada");
+			createNotification();}
+		return Service.START_NOT_STICKY;
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		if (timer != null) {
+	/*	if (timer != null) {
 			timer.cancel();
 		}
-		Log.d("timer", "timer terminado");
+		Log.d("timer", "timer terminado");*/
 	}
 	
 	//Crea el JSONArray que contiene el codigo XML extraido directo de Twitter

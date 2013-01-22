@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory 
+        android:title="Preferencias"
+        android:key="first_category">
+        
+
+        <ListPreference 
+            android:key="intervalo_acutalizacion"
+            android:title="Intervalo de actualizacion"
+            android:summary="Define que tan seguido quieres que la aplicación revise por nuevas alertas."
+            android:defaultValue="30" 
+            android:entries="@array/updateInterval"
+            android:entryValues="@array/updateIntervalValues"
+        />    
+            
+    </PreferenceCategory>
+
+
+    
+</PreferenceScreen>
