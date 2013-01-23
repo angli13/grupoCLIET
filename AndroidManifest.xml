@@ -12,6 +12,7 @@
         android:debuggable="true">
        
         <activity
+            android:theme="@android:style/Theme"
             android:name=".GrupoCLIETActivity"
             android:label="@string/app_name" >
             <intent-filter>
@@ -19,6 +20,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
         <service android:name="ServicioBase"></service>
         <receiver android:name="alarmaeventoReceiver"></receiver>
         <receiver android:name="alarmaReceiver" >

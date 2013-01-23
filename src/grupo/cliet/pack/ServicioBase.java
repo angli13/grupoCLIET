@@ -35,6 +35,7 @@ public class ServicioBase extends Service {
 
 	@Override
 	public IBinder onBind(Intent arg0) {
+	
 		return mBinder;
 	}
 	public class MyBinder extends Binder{
@@ -45,21 +46,15 @@ public class ServicioBase extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-	/*	timer.scheduleAtFixedRate((new TimerTask(){
-		public void run(){ 
-			if (TweetNuevo()){
-				Log.d("Llenar", "No hay ningun tweet nuevo");
-			} else {
-				Log.v("",""+TweetNuevo());
+
 				LlenarBD(ExtraerTwitter("pazlagunera",20));
-				Log.d("llenar", "BD actualizada");
-				createNotification();}
-		}}}),0,UPDATE_INTERVAL);
-		Log.d("timer", "timer iniciado"); */
+
 		}
 		
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {	
+		new Thread(){
+			public void run(){
 		if (TweetNuevo()){
 			Log.d("Llenar", "No hay ningun tweet nuevo");
 		} else {
@@ -67,9 +62,10 @@ public class ServicioBase extends Service {
 			LlenarBD(ExtraerTwitter("pazlagunera",20));
 			Log.d("llenar", "BD actualizada");
 			createNotification();}
-		return Service.START_NOT_STICKY;
+		
+	}}.start();
+	return Service.START_NOT_STICKY;
 	}
-
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
@@ -105,7 +101,7 @@ public class ServicioBase extends Service {
 			jsonObject=(JSONObject)obj;
 			
 		}catch(Exception ex){
-			Log.v("TEST","Exception: " + ex.getMessage());
+			Log.v("TESTservicio","Exception: " + ex.getMessage());
 		}
 		
 		JSONArray arr = null;
@@ -114,7 +110,7 @@ public class ServicioBase extends Service {
 			Object j = jsonObject.get("results");
 			arr = (JSONArray)j;
 		}catch(Exception ex){
-			Log.v("TEST","Exception: " + ex.getMessage());
+			Log.v("TESTser","Exception: " + ex.getMessage());
 		}
 		return arr;
 		
@@ -166,7 +162,7 @@ public class ServicioBase extends Service {
 	public void createNotification() {
 		  notificationManager =
 				    (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-				   myNotification = new Notification(R.drawable.icon,
+				   myNotification = new Notification(R.drawable.ic_launcher,
 						   UltimoTweet(),
 				     System.currentTimeMillis());
 				   Context context = getApplicationContext();

@@ -4,21 +4,30 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -42,11 +51,14 @@ public class GrupoCLIETActivity extends Activity {
         super.onCreate(savedInstanceState);
         //SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         doBindService();
+        
+        Log.d("doBindService", "conexion");
         editarbarra();
+        Log.d("editarbarra", "barra de titulo");
         //setContentView(R.layout.main);
-        ArrayList<Tweet> tweets = getTweets();
-        ListView listView = (ListView) findViewById(R.id.ListViewId);
-        listView.setAdapter(new UserItemAdapter(this, R.layout.listitem, tweets));
+       // ArrayList<Tweet> tweets = getTweets();
+        //ListView listView = (ListView) findViewById(R.id.ListViewId);
+        //listView.setAdapter(new UserItemAdapter(this, R.layout.listitem, tweets));
         Intent intent=new Intent(this, alarmaReceiver.class);
         getApplicationContext().sendBroadcast(intent);
 
@@ -70,16 +82,20 @@ public class GrupoCLIETActivity extends Activity {
 	}
 	
 	private ServiceConnection mConnection = new ServiceConnection(){
+
 		public void onServiceConnected(ComponentName name, IBinder binder) {
 			// TODO Auto-generated method stub
-    		s = ((ServicioBase.MyBinder)binder).getService();
-    		s.LlenarBD(s.ExtraerTwitter("pazlagunera", 20));
-    		Log.d("Servicio", "conectado");
+		    		s = ((ServicioBase.MyBinder)binder).getService();
+		    		new Thread(){
+		    			public void run(){
+		    				s.LlenarBD(s.ExtraerTwitter("pazlagunera", 20));
+		    		}}.start();
+    		Log.d("Servicio", "conectado");	
 		}
 		public void onServiceDisconnected(ComponentName name) {
 			// TODO Auto-generated method stub
-			s=null;
-			Log.d("Servicio", "desconectado");
+					s=null;
+			Log.d("Servicio", "desconectado");	
 		}
     };
     void doBindService(){
@@ -211,4 +227,7 @@ public class GrupoCLIETActivity extends Activity {
     if ( myTitleText != null ) {
         myTitleText.setText("NEW TITLE");}*/
     }
+
+
 	}
+
