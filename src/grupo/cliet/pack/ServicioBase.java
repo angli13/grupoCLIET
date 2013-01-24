@@ -1,6 +1,6 @@
 package grupo.cliet.pack;
 
-import java.util.Timer;
+
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -32,6 +32,7 @@ public class ServicioBase extends Service {
 	private Notification myNotification;
 	private String CUENTA = 	"pazlagunera";
 	private String NUMERODETWEETS = "20";
+	private String twit;
 	@Override
 	public IBinder onBind(Intent arg0) {
 	new ObteneryLlenar().execute(CUENTA,NUMERODETWEETS);
@@ -50,7 +51,7 @@ public class ServicioBase extends Service {
 		
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {	
-		new compararTweets().execute(CUENTA);
+		new compararTweets().execute("CUENTA");
 		return START_NOT_STICKY;
 	}
 	@Override
@@ -70,11 +71,11 @@ public class ServicioBase extends Service {
 		  notificationManager =
 				    (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 				   myNotification = new Notification(R.drawable.ic_launcher,
-						   UltimoTweet(),
+						   twit,
 				     System.currentTimeMillis());
 				   Context context = getApplicationContext();
 				   String notificationTitle = "Alerta Ciudadana";
-				   String notificationText = UltimoTweet();
+				   String notificationText = twit;
 				   Intent myIntent = new Intent(this, GrupoCLIETActivity.class);
 				   PendingIntent pendingIntent
 				     = PendingIntent.getActivity(ServicioBase.this,
@@ -91,18 +92,6 @@ public class ServicioBase extends Service {
 				  }
 
 	  
-	  public String UltimoTweet(){
-			AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(this, "administracion", null, 1);
-	        SQLiteDatabase bd=admin.getReadableDatabase();
-	        Cursor fila=bd.rawQuery("select tweet from tweets where _ID='1'",null);
-	        String idenBD = null;
-	        while(fila.moveToNext()) {
-	         idenBD = fila.getString(fila.getColumnIndex("tweet"));}
-	        fila.close();
-	        bd.close();
-	        admin.close();
-	        return idenBD;
-	  }
 	  
 	  public class ObteneryLlenar extends AsyncTask<String, Integer, JSONArray >{
 
@@ -207,22 +196,28 @@ public class ServicioBase extends Service {
 
 		@Override
 		protected void onPostExecute(JSONArray result) {
-			
-			String id =null;
-			for(Object t : result) { id =((JSONObject)t).get("id_str").toString();}
+			String twit = null;
+			String id ="vacio";
+			for(Object t : result) { 
+				id =((JSONObject)t).get("id_str").toString();
+				//twit =((JSONObject)t).get("text").toString();
+				Log.d("valor de id", id);
+			}
 			AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(ServicioBase.this, "administracion", null, 1);
 	        SQLiteDatabase bd=admin.getReadableDatabase();
+	        ServicioBase.this.twit= twit;
 	        Cursor fila=bd.rawQuery("select id from tweets where _ID='1'",null);
 	        String idenBD = null;
 	        while(fila.moveToNext()) {
 	         idenBD = fila.getString(fila.getColumnIndex("id"));}
+	       
 	        fila.close();
 	        bd.close();
 	        admin.close();
-	        long ljson = Long.parseLong(id);
-	        long lbd = Long.parseLong(idenBD);
 	        Log.d("valor de id", id);
 	        Log.d("valor de id en BD", idenBD);
+	        long ljson = Long.parseLong(id);
+	        long lbd = Long.parseLong(idenBD);
 	        Log.v("valor",Boolean.toString(tweetboolean(ljson,lbd)));
 			if (tweetboolean(ljson,lbd)){
 			Log.d("Llenar", "No hay ningun tweet nuevo");

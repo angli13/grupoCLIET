@@ -159,13 +159,13 @@ public class GrupoCLIETActivity extends SherlockActivity {
 		}}
 	
 
-	public Bitmap getBitmap(String bitmapUrl) {
+	/*public Bitmap getBitmap(String bitmapUrl) {
 		try {
 			URL url = new URL(bitmapUrl);
 			return BitmapFactory.decodeStream(url.openConnection() .getInputStream()); 
 		}
 		catch(Exception ex) {return null;}
-	}
+	}*/
 	
 	public ArrayList<Tweet> getTweets() {
 		ArrayList<Tweet> tweets = new ArrayList<Tweet>();
