@@ -3,23 +3,23 @@
 <resources>
 
     <string-array name="updateInterval">
-        <item name="5">Cada 5 Minutos</item>
-        <item name="10">Cada 10 Minutos</item>
-        <item name="20">Cada 20 Minutos</item>
-        <item name="30">cada 30 Minutos</item>
-        <item name="45">Cada 45 Minutos</item>
-        <item name="60">Cada Hora</item>
-        <item name="120">Cada 2 Horas</item>
+        <item >Cada 5 Minutos</item>
+        <item >Cada 10 Minutos</item>
+        <item >Cada 20 Minutos</item>
+        <item >cada 30 Minutos</item>
+        <item >Cada 45 Minutos</item>
+        <item >Cada Hora</item>
+        <item >Cada 2 Horas</item>
     </string-array>
     
     <string-array name="updateIntervalValues">
-        <item name="5">300000</item>
-        <item name="10">600000</item>
-        <item name="20">1200000</item>
-        <item name="30">1800000</item>
-        <item name="45">2700000</item>
-        <item name="60">3600000</item>
-        <item name="120">7200000</item>
+        <item >300000</item>
+        <item >600000</item>
+        <item >1200000</item>
+        <item >1800000</item>
+        <item >2700000</item>
+        <item >3600000</item>
+        <item >7200000</item>
     </string-array>
 
 </resources>

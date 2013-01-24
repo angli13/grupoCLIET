@@ -4,5 +4,6 @@
     <string name="hello">Hello World, GrupoCLIETActivity!</string>
     <string name="app_name">Alerta Laguna</string>
     <string name="preferencias">Preferencias</string>
+    <string name="configuracion">Preferencias</string>
 
 </resources>

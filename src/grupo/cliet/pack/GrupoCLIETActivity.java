@@ -4,20 +4,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-
-import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -25,7 +14,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -40,8 +28,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.MenuInflater;
 
-public class GrupoCLIETActivity extends Activity {
+
+public class GrupoCLIETActivity extends SherlockActivity {
 			private ServicioBase s;
 			private PendingIntent pendingIntent;
 
@@ -49,47 +40,54 @@ public class GrupoCLIETActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         //SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         doBindService();
-        
         Log.d("doBindService", "conexion");
-        editarbarra();
+        //editarbarra();
         Log.d("editarbarra", "barra de titulo");
-        //setContentView(R.layout.main);
-       // ArrayList<Tweet> tweets = getTweets();
-        //ListView listView = (ListView) findViewById(R.id.ListViewId);
-        //listView.setAdapter(new UserItemAdapter(this, R.layout.listitem, tweets));
+        setContentView(R.layout.main);
         Intent intent=new Intent(this, alarmaReceiver.class);
         getApplicationContext().sendBroadcast(intent);
-
+        
 
 }
-    @Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-    	menu.add(Menu.NONE, 0, 0, "Preferencias");
-		return super.onCreateOptionsMenu(menu);
+
+
+
+
+	
+	@Override
+	public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+        MenuInflater inflater = getSupportMenuInflater();
+        inflater.inflate(R.layout.mainmenu, menu);
+        return true;
 	}
+
+
 
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) { 	
-		case 0:
-			startActivity(new Intent(this, Preferencias.class));
-			return true;
-		}
-		return false;
+	public boolean onOptionsItemSelected(
+			com.actionbarsherlock.view.MenuItem item) {
+        if (item.getItemId() == R.id.configuracion) {
+            startActivity(new Intent(this, Preferencias.class));
+        }
+        return true;
 	}
-	
+
+
+
+
+
 	private ServiceConnection mConnection = new ServiceConnection(){
 
 		public void onServiceConnected(ComponentName name, IBinder binder) {
 			// TODO Auto-generated method stub
 		    		s = ((ServicioBase.MyBinder)binder).getService();
-		    		new Thread(){
-		    			public void run(){
-		    				s.LlenarBD(s.ExtraerTwitter("pazlagunera", 20));
-		    		}}.start();
+		    	        ArrayList<Tweet> tweets = getTweets();
+		    	        ListView listView = (ListView) findViewById(R.id.ListViewId);
+		    	        listView.setAdapter(new UserItemAdapter(GrupoCLIETActivity.this, R.layout.listitem, tweets));
     		Log.d("Servicio", "conectado");	
 		}
 		public void onServiceDisconnected(ComponentName name) {
@@ -153,7 +151,8 @@ public class GrupoCLIETActivity extends Activity {
 				}
 				
 				if(image != null) {
-					image.setImageBitmap(getBitmap(tweet.image_url));
+					image.setImageResource(R.drawable.grupo);
+					//image.setImageBitmap(getBitmap(tweet.image_url));
 				}
 			}
 			return v;

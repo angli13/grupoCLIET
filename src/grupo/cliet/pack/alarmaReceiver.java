@@ -7,17 +7,22 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class alarmaReceiver extends BroadcastReceiver {
 	private static final String APP_TAG = "grupo.cliet.pack";
  
-	private static final int EXEC_INTERVAL = 30 * 1000 * 60;
+	private static final String EXEC_INTERVAL = "1800001";
  
 	@Override
 	public void onReceive(final Context ctx, final Intent intent) {
 		Log.d(APP_TAG, "alarmaReceiver.onReceive() called");
-		
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
+		String storedPreference = prefs.getString("intervalo_actualizacion", EXEC_INTERVAL);
+		int intervalo = Integer.parseInt(storedPreference);
+		Log.d("preferencias", String.valueOf(storedPreference));
 		AlarmManager alarmManager = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
 		Intent i = new Intent(ctx, alarmaeventoReceiver.class); // explicit
         						// intent
@@ -26,7 +31,7 @@ public class alarmaReceiver extends BroadcastReceiver {
 		Calendar now = Calendar.getInstance();
 		now.add(Calendar.SECOND, 20);
 		alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
-				now.getTimeInMillis(), EXEC_INTERVAL, intentExecuted);
+				now.getTimeInMillis(), intervalo, intentExecuted);
 		Log.d(APP_TAG, "alarma creada");
 	}
  

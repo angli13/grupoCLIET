@@ -8,12 +8,13 @@
         
 
         <ListPreference 
-            android:key="intervalo_acutalizacion"
+            android:key="intervalo_actualizacion"
             android:title="Intervalo de actualizacion"
             android:summary="Define que tan seguido quieres que la aplicación revise por nuevas alertas."
-            android:defaultValue="30" 
+            android:defaultValue="1800000" 
             android:entries="@array/updateInterval"
             android:entryValues="@array/updateIntervalValues"
+            
         />    
             
     </PreferenceCategory>

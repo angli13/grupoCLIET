@@ -1,7 +1,6 @@
 package grupo.cliet.pack;
 
 import java.util.Timer;
-import java.util.TimerTask;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -21,21 +20,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
 public class ServicioBase extends Service {
-	private Timer timer = new Timer();
-	private static final long UPDATE_INTERVAL=15000;
 	private final IBinder mBinder = new MyBinder();
 	private static final int MY_NOTIFICATION_ID=1;
 	private NotificationManager notificationManager;
 	private Notification myNotification;
-
+	private String CUENTA = 	"pazlagunera";
+	private String NUMERODETWEETS = "20";
 	@Override
 	public IBinder onBind(Intent arg0) {
-	
+	new ObteneryLlenar().execute(CUENTA,NUMERODETWEETS);
 		return mBinder;
 	}
 	public class MyBinder extends Binder{
@@ -47,24 +46,12 @@ public class ServicioBase extends Service {
 	public void onCreate() {
 		super.onCreate();
 
-				LlenarBD(ExtraerTwitter("pazlagunera",20));
-
 		}
 		
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {	
-		new Thread(){
-			public void run(){
-		if (TweetNuevo()){
-			Log.d("Llenar", "No hay ningun tweet nuevo");
-		} else {
-			Log.v("",""+TweetNuevo());
-			LlenarBD(ExtraerTwitter("pazlagunera",20));
-			Log.d("llenar", "BD actualizada");
-			createNotification();}
-		
-	}}.start();
-	return Service.START_NOT_STICKY;
+		new compararTweets().execute(CUENTA);
+		return START_NOT_STICKY;
 	}
 	@Override
 	public void onDestroy() {
@@ -75,89 +62,9 @@ public class ServicioBase extends Service {
 		Log.d("timer", "timer terminado");*/
 	}
 	
-	//Crea el JSONArray que contiene el codigo XML extraido directo de Twitter
-	//searchTerm es el usuario de Twitter del cual se extraen los tweets
-	//page es el numero de tweets a extraer
-	public JSONArray ExtraerTwitter(String searchTerm, int page){
-		String searchUrl = "http://search.twitter.com/search.json?q=from:"+searchTerm+"&rpp="+page+"&include_entities=true&result_type=recent";
 
-		HttpClient client = new  DefaultHttpClient();
-		HttpGet get = new HttpGet(searchUrl);
-	      
-		ResponseHandler<String> responseHandler = new BasicResponseHandler();
-
-		String responseBody = null;
-		try{
-			responseBody = client.execute(get, responseHandler);
-		}catch(Exception ex) {
-			ex.printStackTrace();
-		}
-
-		JSONObject jsonObject = null;
-		JSONParser parser=new JSONParser();
-		
-		try {
-			Object obj = parser.parse(responseBody);
-			jsonObject=(JSONObject)obj;
-			
-		}catch(Exception ex){
-			Log.v("TESTservicio","Exception: " + ex.getMessage());
-		}
-		
-		JSONArray arr = null;
-		
-		try {
-			Object j = jsonObject.get("results");
-			arr = (JSONArray)j;
-		}catch(Exception ex){
-			Log.v("TESTser","Exception: " + ex.getMessage());
-		}
-		return arr;
-		
-	}
 	
-	//Llena la base de datos TWEETS con el JSONArray indicado 
-	public void LlenarBD(JSONArray arr){
-		AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(this, "administracion", null, 1);
-        SQLiteDatabase bd=admin.getWritableDatabase();
-        bd.execSQL("drop table if exists tweets");
-        admin.onCreate(bd);
-        ContentValues registro = new ContentValues();
-        for(Object t : arr) {
-			registro.put("id", ((JSONObject)t).get("id_str").toString());
-	        registro.put("usuario", ((JSONObject)t).get("from_user_name").toString());
-	        registro.put("tweet",((JSONObject)t).get("text").toString());
-	        registro.put("imagen",((JSONObject)t).get("profile_image_url").toString() ); 
-	        registro.put("fecha",((JSONObject)t).get("created_at").toString()) ; 	
-            bd.insert("tweets", null, registro);
-            Log.d("TWEET", "TWEET guardado "+(((JSONObject)t).get("id_str").toString()));
-        }
-        bd.close();
-        admin.close();
-	}
-	
-	//Revisa el ultimo tweet en Twitter y el ultimo en la BD
-	//entrega un valor verdadero si no coinciden, falso si sigue siendo el mismo
-	public boolean TweetNuevo(){
-		JSONArray arr = ExtraerTwitter("pazlagunera",1);
-		String id =null;
-		for(Object t : arr) { id =((JSONObject)t).get("id_str").toString();}
-		AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(this, "administracion", null, 1);
-        SQLiteDatabase bd=admin.getReadableDatabase();
-        Cursor fila=bd.rawQuery("select id from tweets where _ID='1'",null);
-        String idenBD = null;
-        while(fila.moveToNext()) {
-         idenBD = fila.getString(fila.getColumnIndex("id"));}
-        fila.close();
-        bd.close();
-        admin.close();
-        Log.d("valor de id", id);
-        Log.d("valor de id", idenBD);
-        if  (id==idenBD) {
-        return false;
-        } else {
-		return true;}	
-	}
+
 	
 	public void createNotification() {
 		  notificationManager =
@@ -196,5 +103,144 @@ public class ServicioBase extends Service {
 	        admin.close();
 	        return idenBD;
 	  }
+	  
+	  public class ObteneryLlenar extends AsyncTask<String, Integer, JSONArray >{
+
+		@Override
+		protected JSONArray doInBackground(String... searchTerm) {
+			String searchUrl = "http://search.twitter.com/search.json?q=from:"+searchTerm[0]+"&rpp="+Integer.parseInt(searchTerm[1])+"&include_entities=true&result_type=recent";
+
+			HttpClient client = new  DefaultHttpClient();
+			HttpGet get = new HttpGet(searchUrl);
+		      
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+
+			String responseBody = null;
+			try{
+				responseBody = client.execute(get, responseHandler);
+			}catch(Exception ex) {
+				ex.printStackTrace();
+			}
+
+			JSONObject jsonObject = null;
+			JSONParser parser=new JSONParser();
+			
+			try {
+				Object obj = parser.parse(responseBody);
+				jsonObject=(JSONObject)obj;
+				
+			}catch(Exception ex){
+				Log.v("TESTservicio","Exception: " + ex.getMessage());
+			}
+			
+			JSONArray arr = null;
+			
+			try {
+				Object j = jsonObject.get("results");
+				arr = (JSONArray)j;
+			}catch(Exception ex){
+				Log.v("TESTser","Exception: " + ex.getMessage());
+			}
+			return arr;
+		}
+
+		@Override
+		protected void onPostExecute(JSONArray result) {
+			AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(ServicioBase.this, "administracion", null, 1);
+	        SQLiteDatabase bd=admin.getWritableDatabase();
+	        bd.execSQL("drop table if exists tweets");
+	        admin.onCreate(bd);
+	        ContentValues registro = new ContentValues();
+	        for(Object t : result) {
+				registro.put("id", ((JSONObject)t).get("id_str").toString());
+		        registro.put("usuario", ((JSONObject)t).get("from_user_name").toString());
+		        registro.put("tweet",((JSONObject)t).get("text").toString());
+		        registro.put("imagen",((JSONObject)t).get("profile_image_url").toString() ); 
+		        registro.put("fecha",((JSONObject)t).get("created_at").toString()) ; 	
+	            bd.insert("tweets", null, registro);
+	            Log.d("TWEET", "TWEET guardado "+(((JSONObject)t).get("id_str").toString()));
+	        }
+	        bd.close();
+	        admin.close();	
+		}  
+	  }
+	  
+	  public class compararTweets extends AsyncTask<String, Integer, JSONArray>{
+
+		@Override
+		protected JSONArray doInBackground(String... params) {
+			String searchUrl = "http://search.twitter.com/search.json?q=from:"+params[0]+"&rpp=1&include_entities=true&result_type=recent";
+
+			HttpClient client = new  DefaultHttpClient();
+			HttpGet get = new HttpGet(searchUrl);
+		      
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+
+			String responseBody = null;
+			try{
+				responseBody = client.execute(get, responseHandler);
+			}catch(Exception ex) {
+				ex.printStackTrace();
+			}
+
+			JSONObject jsonObject = null;
+			JSONParser parser=new JSONParser();
+			
+			try {
+				Object obj = parser.parse(responseBody);
+				jsonObject=(JSONObject)obj;
+				
+			}catch(Exception ex){
+				Log.v("TESTservicio","Exception: " + ex.getMessage());
+			}
+			
+			JSONArray arr = null;
+			
+			try {
+				Object j = jsonObject.get("results");
+				arr = (JSONArray)j;
+			}catch(Exception ex){
+				Log.v("TESTser","Exception: " + ex.getMessage());
+			}
+			return arr;
+		}
+
+		@Override
+		protected void onPostExecute(JSONArray result) {
+			
+			String id =null;
+			for(Object t : result) { id =((JSONObject)t).get("id_str").toString();}
+			AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(ServicioBase.this, "administracion", null, 1);
+	        SQLiteDatabase bd=admin.getReadableDatabase();
+	        Cursor fila=bd.rawQuery("select id from tweets where _ID='1'",null);
+	        String idenBD = null;
+	        while(fila.moveToNext()) {
+	         idenBD = fila.getString(fila.getColumnIndex("id"));}
+	        fila.close();
+	        bd.close();
+	        admin.close();
+	        long ljson = Long.parseLong(id);
+	        long lbd = Long.parseLong(idenBD);
+	        Log.d("valor de id", id);
+	        Log.d("valor de id en BD", idenBD);
+	        Log.v("valor",Boolean.toString(tweetboolean(ljson,lbd)));
+			if (tweetboolean(ljson,lbd)){
+			Log.d("Llenar", "No hay ningun tweet nuevo");
+		} else {
+		Log.v("",""+"tweet nuevo, ejecutando consulta y llenando BD"); 
+			new ObteneryLlenar().execute(CUENTA,NUMERODETWEETS);
+			Log.d("llenar", "BD actualizada");
+			createNotification();
+			}
+		  
+	  }
+        public Boolean tweetboolean(long id1, long id2){
+        	if (id1==id2){
+        		return true;
+        	} else{
+        		return false;
+        	}
+        }
 	}
+}
 
