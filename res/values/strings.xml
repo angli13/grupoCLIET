@@ -5,5 +5,6 @@
     <string name="app_name">Alerta Laguna</string>
     <string name="preferencias">Preferencias</string>
     <string name="configuracion">Preferencias</string>
+    <string name="actualizar">Acutalizar Lista</string>
 
 </resources>

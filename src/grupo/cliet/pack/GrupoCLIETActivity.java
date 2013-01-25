@@ -1,8 +1,12 @@
 package grupo.cliet.pack;
 
-import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Locale;
+
+import org.json.simple.JSONObject;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -12,17 +16,13 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -35,6 +35,7 @@ import com.actionbarsherlock.view.MenuInflater;
 public class GrupoCLIETActivity extends SherlockActivity {
 			private ServicioBase s;
 			private PendingIntent pendingIntent;
+			
 
 	/** Called when the activity is first created. */
     @Override
@@ -49,7 +50,6 @@ public class GrupoCLIETActivity extends SherlockActivity {
         setContentView(R.layout.main);
         Intent intent=new Intent(this, alarmaReceiver.class);
         getApplicationContext().sendBroadcast(intent);
-        
 
 }
 
@@ -84,10 +84,8 @@ public class GrupoCLIETActivity extends SherlockActivity {
 
 		public void onServiceConnected(ComponentName name, IBinder binder) {
 			// TODO Auto-generated method stub
-		    		s = ((ServicioBase.MyBinder)binder).getService();
-		    	        ArrayList<Tweet> tweets = getTweets();
-		    	        ListView listView = (ListView) findViewById(R.id.ListViewId);
-		    	        listView.setAdapter(new UserItemAdapter(GrupoCLIETActivity.this, R.layout.listitem, tweets));
+		    		s = ((ServicioBase.MyBinder)binder).getService();  
+		    		new CrearArray().execute();
     		Log.d("Servicio", "conectado");	
 		}
 		public void onServiceDisconnected(ComponentName name) {
@@ -95,6 +93,7 @@ public class GrupoCLIETActivity extends SherlockActivity {
 					s=null;
 			Log.d("Servicio", "desconectado");	
 		}
+
     };
     void doBindService(){
     	bindService(new Intent(this, ServicioBase.class), 
@@ -107,9 +106,7 @@ public class GrupoCLIETActivity extends SherlockActivity {
 
     
  public void actualizar(View view){
-	ArrayList<Tweet> tweets = getTweets();
-    ListView listView = (ListView) findViewById(R.id.ListViewId);
-    listView.setAdapter(new UserItemAdapter(this, R.layout.listitem, tweets));
+	 new CrearArray().execute();
     }   
 
             @Override
@@ -147,7 +144,7 @@ public class GrupoCLIETActivity extends SherlockActivity {
 					message.setText(tweet.message);
 				}
 				if(date != null) {
-					date.setText(tweet.fecha);
+					date.setText(cambiarFecha(tweet.fecha));
 				}
 				
 				if(image != null) {
@@ -158,7 +155,7 @@ public class GrupoCLIETActivity extends SherlockActivity {
 			return v;
 		}}
 	
-
+	
 	/*public Bitmap getBitmap(String bitmapUrl) {
 		try {
 			URL url = new URL(bitmapUrl);
@@ -167,24 +164,7 @@ public class GrupoCLIETActivity extends SherlockActivity {
 		catch(Exception ex) {return null;}
 	}*/
 	
-	public ArrayList<Tweet> getTweets() {
-		ArrayList<Tweet> tweets = new ArrayList<Tweet>();
-		AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(this, "administracion", null, 1);
-        SQLiteDatabase bd=admin.getWritableDatabase();
-        Cursor fila=bd.rawQuery("select *  from tweets",null);
-        while(fila.moveToNext()) {
-            tweets.add(new Tweet(fila.getString(fila.getColumnIndex("id")),
-            		fila.getString(fila.getColumnIndex("usuario")),
-            		fila.getString(fila.getColumnIndex("tweet")),
-            		fila.getString(fila.getColumnIndex("imagen")),
-            		fila.getString(fila.getColumnIndex("fecha"))));
-           Log.d("id en BD", fila.getString(fila.getColumnIndex("_ID"))) ;
-         }
-        bd.close(); 
-        fila.close();
-        return tweets;
-
-    }
+	
 	
 	public void iniciarAlarma(){
 		Intent myIntent = new Intent(GrupoCLIETActivity.this, ServicioBase.class);
@@ -215,18 +195,70 @@ public class GrupoCLIETActivity extends SherlockActivity {
 			this.fecha = fecha;		
 		}
 	}
-	public void editarbarra(){
-    final boolean customTitleSupported = requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-    setContentView(R.layout.main);
-    if ( customTitleSupported ) {
-        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
-        }
 
-   /* final TextView myTitleText = (TextView) findViewById(R.id.myTitle);
-    if ( myTitleText != null ) {
-        myTitleText.setText("NEW TITLE");}*/
+    public class PopularTabla extends AsyncTask<ArrayList<Tweet>, Integer, UserItemAdapter>{
+		@Override
+		protected UserItemAdapter doInBackground(ArrayList<Tweet>... params) {
+			ArrayList<Tweet> twits = params[0];
+			UserItemAdapter adaptador= new UserItemAdapter(GrupoCLIETActivity.this, R.layout.listitem, twits);
+			return adaptador;
+		}
+
+		@Override
+		protected void onPostExecute(UserItemAdapter result) {
+			ListView listView = (ListView) findViewById(R.id.ListViewId);
+	        listView.setAdapter(result);
+		}
+    	
     }
 
+    public class CrearArray extends AsyncTask<Void, Integer, ArrayList<Tweet>>{
+		
+    	public ArrayList<Tweet> getTweets() {
+    		ArrayList<Tweet> tweets = new ArrayList<Tweet>();
+    		AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(GrupoCLIETActivity.this, "administracion", null, 1);
+            SQLiteDatabase bd=admin.getWritableDatabase();
+            Cursor fila=bd.rawQuery("select *  from tweets",null);
+            while(fila.moveToNext()) {
+                tweets.add(new Tweet(fila.getString(fila.getColumnIndex("id")),
+                		fila.getString(fila.getColumnIndex("usuario")),
+                		fila.getString(fila.getColumnIndex("tweet")),
+                		fila.getString(fila.getColumnIndex("imagen")),
+                		fila.getString(fila.getColumnIndex("fecha"))));
+               Log.d("id en BD", fila.getString(fila.getColumnIndex("_ID"))) ;
+             }
+            bd.close(); 
+            fila.close();
+            return tweets;
+
+        }
+    	
+    	@Override
+		protected ArrayList<Tweet> doInBackground(Void... params) {
+			ArrayList<Tweet> tweets = getTweets();
+			return tweets;
+		}
+
+		@Override
+		protected void onPostExecute(ArrayList<Tweet> result) {
+			new PopularTabla().execute(result);
+		}
+    	
+    }
+    public String cambiarFecha(String fecha){
+    	fecha = fecha.replace(",", "");
+    	Locale local = new Locale("es","MX");
+    final SimpleDateFormat formatter = new SimpleDateFormat("dd MMM yyy HH:mm:ss", local);
+    final SimpleDateFormat parser = new SimpleDateFormat("EEE dd MMM yyyy HH:mm:ss Z", Locale.US);
+    String fechanueva = null;
+	try {
+		fechanueva = formatter.format(parser.parse(fecha));
+	} catch (ParseException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+    return fechanueva;
+    }
 
 	}
 

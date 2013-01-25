@@ -923,10 +923,11 @@ containing a value of this type.
         public static final int abs__textfield_searchview_right_holo_light=0x7f02006e;
         public static final int alertalaguna=0x7f02006f;
         public static final int background=0x7f020070;
-        public static final int grupo=0x7f020071;
-        public static final int ic_launcher=0x7f020072;
-        public static final int ic_menu_preferences=0x7f020073;
-        public static final int icon=0x7f020074;
+        public static final int backgrounda=0x7f020071;
+        public static final int grupo=0x7f020072;
+        public static final int ic_launcher=0x7f020073;
+        public static final int ic_menu_preferences=0x7f020074;
+        public static final int icon=0x7f020075;
     }
     public static final class id {
         public static final int ImageView01=0x7f05003a;
@@ -1070,6 +1071,7 @@ containing a value of this type.
         /**  Description of a share target (both in the list of such or the default share button) in a ShareActionProvider (share UI). [CHAR LIMIT=NONE] 
          */
         public static final int abs__shareactionprovider_share_with_application=0x7f0a0009;
+        public static final int actualizar=0x7f0a0013;
         public static final int app_name=0x7f0a0010;
         public static final int configuracion=0x7f0a0012;
         public static final int hello=0x7f0a000f;

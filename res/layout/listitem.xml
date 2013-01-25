@@ -5,7 +5,8 @@
 	android:layout_width="wrap_content" 
 	android:paddingBottom="5dp"
 	android:paddingTop="5dp" 
-	android:paddingLeft="5dp">
+	android:paddingLeft="5dp"
+	android:background="@drawable/backgrounda">
 	
 	<ImageView
         android:id="@+id/avatar"
@@ -29,7 +30,8 @@
 			android:layout_height="wrap_content"
 			android:layout_marginLeft="10dp" 
 			android:textSize="18sp"
-			android:autoLink="web"/>
+			android:autoLink="web"
+			android:textColorLink="#18B44F"/>
 		<TextView android:id="@+id/date" 
 			android:layout_width="wrap_content" 
 			android:layout_height="wrap_content"

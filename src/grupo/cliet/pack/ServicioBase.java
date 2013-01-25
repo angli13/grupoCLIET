@@ -51,7 +51,7 @@ public class ServicioBase extends Service {
 		
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {	
-		new compararTweets().execute("CUENTA");
+		new compararTweets().execute(CUENTA);
 		return START_NOT_STICKY;
 	}
 	@Override
@@ -196,21 +196,19 @@ public class ServicioBase extends Service {
 
 		@Override
 		protected void onPostExecute(JSONArray result) {
-			String twit = null;
 			String id ="vacio";
 			for(Object t : result) { 
 				id =((JSONObject)t).get("id_str").toString();
-				//twit =((JSONObject)t).get("text").toString();
+				twit =((JSONObject)t).get("text").toString();
 				Log.d("valor de id", id);
 			}
 			AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(ServicioBase.this, "administracion", null, 1);
 	        SQLiteDatabase bd=admin.getReadableDatabase();
-	        ServicioBase.this.twit= twit;
 	        Cursor fila=bd.rawQuery("select id from tweets where _ID='1'",null);
 	        String idenBD = null;
 	        while(fila.moveToNext()) {
-	         idenBD = fila.getString(fila.getColumnIndex("id"));}
-	       
+	         idenBD = fila.getString(fila.getColumnIndex("id"));
+	        }
 	        fila.close();
 	        bd.close();
 	        admin.close();
