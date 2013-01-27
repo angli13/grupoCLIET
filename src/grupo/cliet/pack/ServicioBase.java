@@ -24,18 +24,21 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 public class ServicioBase extends Service {
 	private final IBinder mBinder = new MyBinder();
 	private static final int MY_NOTIFICATION_ID=1;
+	private static final String CUENTA2 = "pazlagunera";
 	private NotificationManager notificationManager;
 	private Notification myNotification;
-	private String CUENTA = 	"pazlagunera";
+	private static final String CUENTA = 	"Rojolaguna";
 	private String NUMERODETWEETS = "20";
 	private String twit;
 	@Override
 	public IBinder onBind(Intent arg0) {
-	new ObteneryLlenar().execute(CUENTA,NUMERODETWEETS);
+		new ObteneryLlenar().execute(CUENTA,CUENTA2,NUMERODETWEETS);
+		//new compararTweets().execute(CUENTA);
 		return mBinder;
 	}
 	public class MyBinder extends Binder{
@@ -51,7 +54,7 @@ public class ServicioBase extends Service {
 		
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {	
-		new compararTweets().execute(CUENTA);
+		new compararTweets().execute(CUENTA,CUENTA2);
 		return START_NOT_STICKY;
 	}
 	@Override
@@ -97,7 +100,8 @@ public class ServicioBase extends Service {
 
 		@Override
 		protected JSONArray doInBackground(String... searchTerm) {
-			String searchUrl = "http://search.twitter.com/search.json?q=from:"+searchTerm[0]+"&rpp="+Integer.parseInt(searchTerm[1])+"&include_entities=true&result_type=recent";
+			try{
+			String searchUrl = "http://search.twitter.com/search.json?q=from%3a"+searchTerm[0]+"+OR+from%3a"+searchTerm[1]+"&rpp="+searchTerm[2]+"&include_entities=true&result_type=recent";
 
 			HttpClient client = new  DefaultHttpClient();
 			HttpGet get = new HttpGet(searchUrl);
@@ -109,6 +113,8 @@ public class ServicioBase extends Service {
 				responseBody = client.execute(get, responseHandler);
 			}catch(Exception ex) {
 				ex.printStackTrace();
+				Toast.makeText(getApplicationContext(),
+	                    "Problema de Conexión", Toast.LENGTH_SHORT).show();
 			}
 
 			JSONObject jsonObject = null;
@@ -131,6 +137,11 @@ public class ServicioBase extends Service {
 				Log.v("TESTser","Exception: " + ex.getMessage());
 			}
 			return arr;
+			}catch (Exception error){
+				Log.v("Error","Exception: " + error.getMessage());
+				cancel(true);
+				return null;
+			}
 		}
 
 		@Override
@@ -151,6 +162,12 @@ public class ServicioBase extends Service {
 	        }
 	        bd.close();
 	        admin.close();	
+		}
+
+		@Override
+		protected void onCancelled() {
+			Toast.makeText(getApplicationContext(),
+                    "Problema de Conexión", Toast.LENGTH_SHORT).show();
 		}  
 	  }
 	  
@@ -158,7 +175,8 @@ public class ServicioBase extends Service {
 
 		@Override
 		protected JSONArray doInBackground(String... params) {
-			String searchUrl = "http://search.twitter.com/search.json?q=from:"+params[0]+"&rpp=1&include_entities=true&result_type=recent";
+			try{
+			String searchUrl = "http://search.twitter.com/search.json?q=from%3a"+params[0]+"+OR+from%3a"+params[1]+"&rpp=1&include_entities=true&result_type=recent";
 
 			HttpClient client = new  DefaultHttpClient();
 			HttpGet get = new HttpGet(searchUrl);
@@ -170,6 +188,9 @@ public class ServicioBase extends Service {
 				responseBody = client.execute(get, responseHandler);
 			}catch(Exception ex) {
 				ex.printStackTrace();
+				Toast.makeText(getApplicationContext(),
+	                    "Problema de Conexión", Toast.LENGTH_SHORT).show();
+				cancel(true);
 			}
 
 			JSONObject jsonObject = null;
@@ -181,6 +202,7 @@ public class ServicioBase extends Service {
 				
 			}catch(Exception ex){
 				Log.v("TESTservicio","Exception: " + ex.getMessage());
+				cancel(true);
 			}
 			
 			JSONArray arr = null;
@@ -190,8 +212,21 @@ public class ServicioBase extends Service {
 				arr = (JSONArray)j;
 			}catch(Exception ex){
 				Log.v("TESTser","Exception: " + ex.getMessage());
+				cancel(true);
 			}
 			return arr;
+			}catch (Exception error){
+				Log.v("Error","Exception: " + error.getMessage());
+				cancel(true);
+				return null;
+			}
+			
+		}
+
+		@Override
+		protected void onCancelled() {
+			Toast.makeText(getApplicationContext(),
+                    "Problema de Conexión", Toast.LENGTH_SHORT).show();
 		}
 
 		@Override
@@ -221,7 +256,7 @@ public class ServicioBase extends Service {
 			Log.d("Llenar", "No hay ningun tweet nuevo");
 		} else {
 		Log.v("",""+"tweet nuevo, ejecutando consulta y llenando BD"); 
-			new ObteneryLlenar().execute(CUENTA,NUMERODETWEETS);
+			new ObteneryLlenar().execute(CUENTA,CUENTA2,NUMERODETWEETS);
 			Log.d("llenar", "BD actualizada");
 			createNotification();
 			}

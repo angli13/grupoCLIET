@@ -3,14 +3,21 @@ package grupo.cliet.pack;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Locale;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
-import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -27,14 +34,18 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuInflater;
 
 
 public class GrupoCLIETActivity extends SherlockActivity {
-			private ServicioBase s;
-			private PendingIntent pendingIntent;
+		//private ServicioBase s;
+		//private PendingIntent pendingIntent;
+			private static final String CUENTA = 	"Rojolaguna";
+			private static final String CUENTA2 = 	"pazlagunera";
+			private String NUMERODETWEETS = "20";
 			
 
 	/** Called when the activity is first created. */
@@ -43,11 +54,10 @@ public class GrupoCLIETActivity extends SherlockActivity {
         super.onCreate(savedInstanceState);
 
         //SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        doBindService();
+       // doBindService();
         Log.d("doBindService", "conexion");
-        //editarbarra();
-        Log.d("editarbarra", "barra de titulo");
         setContentView(R.layout.main);
+        new ObteneryLlenar().execute(CUENTA,CUENTA2,NUMERODETWEETS);
         Intent intent=new Intent(this, alarmaReceiver.class);
         getApplicationContext().sendBroadcast(intent);
 
@@ -70,6 +80,9 @@ public class GrupoCLIETActivity extends SherlockActivity {
 	@Override
 	public boolean onOptionsItemSelected(
 			com.actionbarsherlock.view.MenuItem item) {
+        if (item.getItemId() == R.id.actualizar) {
+        	new CrearArray().execute();
+        }
         if (item.getItemId() == R.id.configuracion) {
             startActivity(new Intent(this, Preferencias.class));
         }
@@ -80,13 +93,13 @@ public class GrupoCLIETActivity extends SherlockActivity {
 
 
 
-	private ServiceConnection mConnection = new ServiceConnection(){
+	/*private ServiceConnection mConnection = new ServiceConnection(){
 
 		public void onServiceConnected(ComponentName name, IBinder binder) {
 			// TODO Auto-generated method stub
-		    		s = ((ServicioBase.MyBinder)binder).getService();  
+		    		s = ((ServicioBase.MyBinder)binder).getService(); 
 		    		new CrearArray().execute();
-    		Log.d("Servicio", "conectado");	
+		    		Log.d("Servicio", "conectado");	
 		}
 		public void onServiceDisconnected(ComponentName name) {
 			// TODO Auto-generated method stub
@@ -100,14 +113,8 @@ public class GrupoCLIETActivity extends SherlockActivity {
     			mConnection,Context.BIND_AUTO_CREATE);
     	
     	
-    }
-    
+    }*/
 
-
-    
- public void actualizar(View view){
-	 new CrearArray().execute();
-    }   
 
             @Override
             protected void onStart() {
@@ -148,7 +155,9 @@ public class GrupoCLIETActivity extends SherlockActivity {
 				}
 				
 				if(image != null) {
-					image.setImageResource(R.drawable.grupo);
+					if (tweet.username.equals("codigo rojo laguna")){
+					image.setImageResource(R.drawable.crojo);}
+					else{image.setImageResource(R.drawable.grupo);}
 					//image.setImageBitmap(getBitmap(tweet.image_url));
 				}
 			}
@@ -164,20 +173,6 @@ public class GrupoCLIETActivity extends SherlockActivity {
 		catch(Exception ex) {return null;}
 	}*/
 	
-	
-	
-	public void iniciarAlarma(){
-		Intent myIntent = new Intent(GrupoCLIETActivity.this, ServicioBase.class);
-		   pendingIntent = PendingIntent.getService(GrupoCLIETActivity.this, 0, myIntent, 0);
-
-		            AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
-
-		            Calendar calendar = Calendar.getInstance();
-		            calendar.setTimeInMillis(System.currentTimeMillis());
-		            calendar.add(Calendar.SECOND, 15);
-		            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), calendar.getTimeInMillis(), pendingIntent);
-		            Log.d("alarma", "activada");
-	}
 	
 	public class Tweet {
 		public String id;
@@ -197,6 +192,14 @@ public class GrupoCLIETActivity extends SherlockActivity {
 	}
 
     public class PopularTabla extends AsyncTask<ArrayList<Tweet>, Integer, UserItemAdapter>{
+        private ProgressDialog dialog;
+      int myProgress;
+    	@Override
+		protected void onPreExecute() {
+            dialog = ProgressDialog.show(GrupoCLIETActivity.this, "", "Cargando... Por favor espera", true);
+          myProgress = 0;
+		}
+
 		@Override
 		protected UserItemAdapter doInBackground(ArrayList<Tweet>... params) {
 			ArrayList<Tweet> twits = params[0];
@@ -206,6 +209,7 @@ public class GrupoCLIETActivity extends SherlockActivity {
 
 		@Override
 		protected void onPostExecute(UserItemAdapter result) {
+			dialog.dismiss();
 			ListView listView = (ListView) findViewById(R.id.ListViewId);
 	        listView.setAdapter(result);
 		}
@@ -232,16 +236,28 @@ public class GrupoCLIETActivity extends SherlockActivity {
             return tweets;
 
         }
-    	
+        private ProgressDialog dialog;
+        int myProgress;
+      	@Override
+  		protected void onPreExecute() {
+              dialog = ProgressDialog.show(GrupoCLIETActivity.this, "", "Cargando... Por favor espera", true);
+            myProgress = 0;
+  		}
     	@Override
 		protected ArrayList<Tweet> doInBackground(Void... params) {
-			ArrayList<Tweet> tweets = getTweets();
-			return tweets;
+			try{
+    		ArrayList<Tweet> tweets = getTweets();
+    		return tweets;
+			}catch (Exception ex){
+    		Log.d("array", "problema en array");
+			return null;
+			}
 		}
 
 		@Override
 		protected void onPostExecute(ArrayList<Tweet> result) {
 			new PopularTabla().execute(result);
+			dialog.dismiss();
 		}
     	
     }
@@ -260,5 +276,89 @@ public class GrupoCLIETActivity extends SherlockActivity {
     return fechanueva;
     }
 
+	  public class ObteneryLlenar extends AsyncTask<String, Integer, JSONArray >{
+
+		@Override
+		protected JSONArray doInBackground(String... searchTerm) {
+			try{
+			String searchUrl = "http://search.twitter.com/search.json?q=from%3a"+searchTerm[0]+"+OR+from%3a"+searchTerm[1]+"&rpp="+searchTerm[2]+"&include_entities=true&result_type=recent";
+
+			HttpClient client = new  DefaultHttpClient();
+			HttpGet get = new HttpGet(searchUrl);
+		      
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+
+			String responseBody = null;
+			try{
+				responseBody = client.execute(get, responseHandler);
+			}catch(Exception ex) {
+				ex.printStackTrace();
+				Toast.makeText(getApplicationContext(),
+	                    "Problema de Conexión", Toast.LENGTH_SHORT).show();
+			}
+
+			JSONObject jsonObject = null;
+			JSONParser parser=new JSONParser();
+			
+			try {
+				Object obj = parser.parse(responseBody);
+				jsonObject=(JSONObject)obj;
+				
+			}catch(Exception ex){
+				Log.v("TESTservicio","Exception: " + ex.getMessage());
+			}
+			
+			JSONArray arr = null;
+			
+			try {
+				Object j = jsonObject.get("results");
+				arr = (JSONArray)j;
+			}catch(Exception ex){
+				Log.v("TESTser","Exception: " + ex.getMessage());
+			}
+			return arr;
+			}catch (Exception error){
+				Log.v("Error","Exception: " + error.getMessage());
+				cancel(true);
+				return null;
+			}
+		}
+
+		@Override
+		protected void onPostExecute(JSONArray result) {
+			AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(GrupoCLIETActivity.this, "administracion", null, 1);
+	        SQLiteDatabase bd=admin.getWritableDatabase();
+	        bd.execSQL("drop table if exists tweets");
+	        admin.onCreate(bd);
+	        ContentValues registro = new ContentValues();
+	        for(Object t : result) {
+				registro.put("id", ((JSONObject)t).get("id_str").toString());
+		        registro.put("usuario", ((JSONObject)t).get("from_user_name").toString());
+		        registro.put("tweet",((JSONObject)t).get("text").toString());
+		        registro.put("imagen",((JSONObject)t).get("profile_image_url").toString() ); 
+		        registro.put("fecha",((JSONObject)t).get("created_at").toString()) ; 	
+	            bd.insert("tweets", null, registro);
+	            Log.d("TWEET", "TWEET guardado "+(((JSONObject)t).get("id_str").toString()));
+	        }
+	        bd.close();
+	        admin.close();	
+	        dialog.dismiss();
+	        new CrearArray().execute();
+		}
+
+		@Override
+		protected void onCancelled() {
+			Toast.makeText(getApplicationContext(),
+                  "Problema de Conexión", Toast.LENGTH_SHORT).show();
+		}  
+        private ProgressDialog dialog;
+        int myProgress;
+      	@Override
+  		protected void onPreExecute() {
+              dialog = ProgressDialog.show(GrupoCLIETActivity.this, "", "Actualizando... Por favor espera", true);
+            myProgress = 0;
+  		}
+	  }
+    
 	}
 

@@ -924,14 +924,16 @@ containing a value of this type.
         public static final int alertalaguna=0x7f02006f;
         public static final int background=0x7f020070;
         public static final int backgrounda=0x7f020071;
-        public static final int grupo=0x7f020072;
-        public static final int ic_launcher=0x7f020073;
-        public static final int ic_menu_preferences=0x7f020074;
-        public static final int icon=0x7f020075;
+        public static final int crojo=0x7f020072;
+        public static final int grupo=0x7f020073;
+        public static final int ic_launcher=0x7f020074;
+        public static final int ic_menu_preferences=0x7f020075;
+        public static final int ic_menu_refresh=0x7f020076;
+        public static final int icon=0x7f020077;
     }
     public static final class id {
         public static final int ImageView01=0x7f05003a;
-        public static final int ListViewId=0x7f050038;
+        public static final int ListViewId=0x7f050037;
         public static final int abs__action_bar=0x7f050022;
         public static final int abs__action_bar_container=0x7f050021;
         public static final int abs__action_bar_subtitle=0x7f050011;
@@ -972,14 +974,14 @@ containing a value of this type.
         public static final int abs__title=0x7f05001b;
         public static final int abs__titleDivider=0x7f05001c;
         public static final int abs__up=0x7f05000b;
+        public static final int actualizar=0x7f050039;
         public static final int avatar=0x7f050033;
-        public static final int configuracion=0x7f050039;
+        public static final int configuracion=0x7f050038;
         public static final int date=0x7f050036;
         public static final int disableHome=0x7f050009;
         public static final int edit_query=0x7f050027;
         public static final int homeAsUp=0x7f050006;
         public static final int listMode=0x7f050002;
-        public static final int lista=0x7f050037;
         public static final int message=0x7f050035;
         public static final int myTitle=0x7f05003b;
         public static final int normal=0x7f050001;
@@ -1076,6 +1078,7 @@ containing a value of this type.
         public static final int configuracion=0x7f0a0012;
         public static final int hello=0x7f0a000f;
         public static final int preferencias=0x7f0a0011;
+        public static final int usuario=0x7f0a0014;
     }
     public static final class style {
         public static final int DialogWindowTitle_Sherlock=0x7f0b0036;
