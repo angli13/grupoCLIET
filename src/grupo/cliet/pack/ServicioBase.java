@@ -77,7 +77,7 @@ public class ServicioBase extends Service {
 						   twit,
 				     System.currentTimeMillis());
 				   Context context = getApplicationContext();
-				   String notificationTitle = "Alerta Ciudadana";
+				   String notificationTitle = "Alerta Laguna";
 				   String notificationText = twit;
 				   Intent myIntent = new Intent(this, GrupoCLIETActivity.class);
 				   PendingIntent pendingIntent

@@ -29,7 +29,7 @@ public class alarmaReceiver extends BroadcastReceiver {
 		PendingIntent intentExecuted = PendingIntent.getBroadcast(ctx, 0, i,
 				PendingIntent.FLAG_CANCEL_CURRENT);
 		Calendar now = Calendar.getInstance();
-		now.add(Calendar.SECOND, 180);
+		now.add(Calendar.SECOND, (intervalo/1000));
 		alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
 				now.getTimeInMillis(), intervalo, intentExecuted);
 		Log.d(APP_TAG, "alarma creada");

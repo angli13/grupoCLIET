@@ -1,5 +1,7 @@
 package grupo.cliet.pack;
 
+
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,18 +16,14 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +38,7 @@ import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuInflater;
 
 
+
 public class GrupoCLIETActivity extends SherlockActivity {
 		//private ServicioBase s;
 		//private PendingIntent pendingIntent;
@@ -52,12 +51,21 @@ public class GrupoCLIETActivity extends SherlockActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+  	   boolean firstrun = getSharedPreferences("PREFERENCE", MODE_PRIVATE).getBoolean("firstrun", true);
+	    if (firstrun){
+	    	new ObteneryLlenar().execute(CUENTA,CUENTA2,NUMERODETWEETS);
+	    getSharedPreferences("PREFERENCE", MODE_PRIVATE)
+	        .edit()
+	        .putBoolean("firstrun", false)
+	        .commit();
+	    }
         //SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
        // doBindService();
-        Log.d("doBindService", "conexion");
+        
         setContentView(R.layout.main);
-        new ObteneryLlenar().execute(CUENTA,CUENTA2,NUMERODETWEETS);
+        Log.d("antes de comparar", "listo");
+        new compararTweets().execute(CUENTA,CUENTA2);
+        
         Intent intent=new Intent(this, alarmaReceiver.class);
         getApplicationContext().sendBroadcast(intent);
 
@@ -81,7 +89,7 @@ public class GrupoCLIETActivity extends SherlockActivity {
 	public boolean onOptionsItemSelected(
 			com.actionbarsherlock.view.MenuItem item) {
         if (item.getItemId() == R.id.actualizar) {
-        	new CrearArray().execute();
+        	new compararTweets().execute(CUENTA,CUENTA2);
         }
         if (item.getItemId() == R.id.configuracion) {
             startActivity(new Intent(this, Preferencias.class));
@@ -319,7 +327,7 @@ public class GrupoCLIETActivity extends SherlockActivity {
 			return arr;
 			}catch (Exception error){
 				Log.v("Error","Exception: " + error.getMessage());
-				cancel(true);
+				this.cancel(true);
 				return null;
 			}
 		}
@@ -360,5 +368,113 @@ public class GrupoCLIETActivity extends SherlockActivity {
   		}
 	  }
     
+	  public class compararTweets extends AsyncTask<String, Integer, JSONArray>{
+
+			@Override
+			protected JSONArray doInBackground(String... params) {
+				try{
+				String searchUrl = "http://search.twitter.com/search.json?q=from%3a"+params[0]+"+OR+from%3a"+params[1]+"&rpp=1&include_entities=true&result_type=recent";
+
+				HttpClient client = new  DefaultHttpClient();
+				HttpGet get = new HttpGet(searchUrl);
+			      
+				ResponseHandler<String> responseHandler = new BasicResponseHandler();
+
+				String responseBody = null;
+				try{
+					responseBody = client.execute(get, responseHandler);
+				}catch(Exception ex) {
+					ex.printStackTrace();
+					Toast.makeText(getApplicationContext(),
+		                    "Problema de Conexión", Toast.LENGTH_SHORT).show();
+					cancel(true);
+				}
+
+				JSONObject jsonObject = null;
+				JSONParser parser=new JSONParser();
+				
+				try {
+					Object obj = parser.parse(responseBody);
+					jsonObject=(JSONObject)obj;
+					
+				}catch(Exception ex){
+					Log.v("TESTservicio","Exception: " + ex.getMessage());
+					cancel(true);
+				}
+				
+				JSONArray arr = null;
+				
+				try {
+					Object j = jsonObject.get("results");
+					arr = (JSONArray)j;
+				}catch(Exception ex){
+					Log.v("TESTser","Exception: " + ex.getMessage());
+					cancel(true);
+				}
+				return arr;
+				}catch (Exception error){
+					Log.v("Error","Exception: " + error.getMessage());
+					this.cancel(true);
+					return null;
+				}
+				
+			}
+
+			@Override
+			protected void onCancelled() {
+				Toast.makeText(getApplicationContext(),
+	                    "Problema de Conexión", Toast.LENGTH_SHORT).show();
+			}
+
+			@Override
+			protected void onPostExecute(JSONArray result) {
+				String id ="vacio";
+				for(Object t : result) { 
+					id =((JSONObject)t).get("id_str").toString();
+					Log.d("valor de id", id);
+				}
+				AdminSQLiteOpenHelper admin=new AdminSQLiteOpenHelper(GrupoCLIETActivity.this, "administracion", null, 1);
+		        SQLiteDatabase bd=admin.getReadableDatabase();
+		        Cursor fila=bd.rawQuery("select id from tweets where _ID='1'",null);
+		        String idenBD = null;
+		        while(fila.moveToNext()) {
+		         idenBD = fila.getString(fila.getColumnIndex("id"));
+		        }
+		        fila.close();
+		        bd.close();
+		        admin.close();
+		        Log.d("valor de id", id);
+		        Log.d("valor de id en BD", idenBD);
+		        long ljson = Long.parseLong(id);
+		        long lbd = Long.parseLong(idenBD);
+		        Log.v("valor",Boolean.toString(tweetboolean(ljson,lbd)));
+				if (tweetboolean(ljson,lbd)){
+				Log.d("Llenar", "No hay ningun tweet nuevo");
+				new CrearArray().execute();
+				dialog.dismiss();
+			} else {
+			Log.v("",""+"tweet nuevo, ejecutando consulta y llenando BD"); 
+				new ObteneryLlenar().execute(CUENTA,CUENTA2,NUMERODETWEETS);
+				dialog.dismiss();
+				Log.d("llenar", "BD actualizada");
+				}
+			}
+			 private ProgressDialog dialog;
+		        int myProgress;
+		      	@Override
+		  		protected void onPreExecute() {
+		              dialog = ProgressDialog.show(GrupoCLIETActivity.this, "", "Actualizando... Por favor espera", true);
+		            myProgress = 0;
+		  		}
+
+				public Boolean tweetboolean(long id1, long id2){
+		        	if (id1==id2){
+		        		return true;
+		        	} else{
+		        		return false;
+		        	}
+		        }
+	  
 	}
+}
 
