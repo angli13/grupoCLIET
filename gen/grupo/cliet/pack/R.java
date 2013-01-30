@@ -924,12 +924,13 @@ containing a value of this type.
         public static final int alertalaguna=0x7f02006f;
         public static final int background=0x7f020070;
         public static final int backgrounda=0x7f020071;
-        public static final int crojo=0x7f020072;
-        public static final int grupo=0x7f020073;
-        public static final int ic_launcher=0x7f020074;
-        public static final int ic_menu_preferences=0x7f020075;
-        public static final int ic_menu_refresh=0x7f020076;
-        public static final int icon=0x7f020077;
+        public static final int cristo=0x7f020072;
+        public static final int crojo=0x7f020073;
+        public static final int grupo=0x7f020074;
+        public static final int ic_launcher=0x7f020075;
+        public static final int ic_menu_preferences=0x7f020076;
+        public static final int ic_menu_refresh=0x7f020077;
+        public static final int icon=0x7f020078;
     }
     public static final class id {
         public static final int ImageView01=0x7f05003a;
